@@ -19,7 +19,23 @@ privKeyFile = open("priv.pem", "w")
 privKeyFile.write(privKeyPEM)
 privKeyFile.close()
 
-response = requests.post(url="https://srns.smartrns.net/genclientcert_keygen.php", data={"pubkey": pubKeyPEM, "cn": "test2", "days": 1})
+
+
+
+req = crypto.X509Req()
+subj = req.get_subject()
+
+setattr(subj, "C", "DE")
+
+req.set_pubkey(pKey)
+req.sign(pKey, "sha256")
+
+csr = crypto.dump_certificate_request(crypto.FILETYPE_PEM, req)
+
+print(csr)
+
+
+response = requests.post(url="https://srns.smartrns.net/genclientcert_keygen.php", data={"csr": csr, "pubkey": pubKeyPEM, "cn": "test2", "days": 1})
 print(response)
 print(response.text)
 
