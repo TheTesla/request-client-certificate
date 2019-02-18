@@ -27,6 +27,18 @@ subj = req.get_subject()
 
 setattr(subj, "C", "DE")
 
+
+
+extensions = [crypto.X509Extension(b"subjectAltName", False, "DNS:test.tld, DNS:tester.tld, DNS:test.srns.net".encode('ascii'))]
+extensions.append(crypto.X509Extension(b"keyUsage", False, "Digital Signature, Non Repudiation, Key Encipherment".encode('ascii')))
+extensions.append(crypto.X509Extension(b"extendedKeyUsage", False, "serverAuth, clientAuth".encode('ascii')))
+extensions.append(crypto.X509Extension(b"basicConstraints", False, "CA:FALSE".encode('ascii')))
+
+
+req.add_extensions(extensions)
+
+
+
 req.set_pubkey(pKey)
 req.sign(pKey, "sha256")
 
@@ -34,10 +46,13 @@ csr = crypto.dump_certificate_request(crypto.FILETYPE_PEM, req)
 
 print(csr)
 
+csrFile = open("test.csr", "w")
+csrFile.write(str(csr.decode('utf8')))
+csrFile.close()
 
-response = requests.post(url="https://srns.smartrns.net/genclientcert_keygen.php", data={"csr": csr, "pubkey": pubKeyPEM, "cn": "test2", "days": 1})
+response = requests.post(url="https://srns.smartrns.net/genclientcert_keygen.php", data={"csr": csr, "days": 1})
 print(response)
-print(response.text)
+#print(response.text)
 
 
 
@@ -45,12 +60,16 @@ cert = crypto.load_certificate(crypto.FILETYPE_PEM, response.text)
 priv = crypto.load_privatekey(crypto.FILETYPE_PEM, privKeyPEM)
 
 
+ext = cert.get_extension(2)
+print(ext)
+
 pfx = crypto.PKCS12()
 pfx.set_privatekey(priv)
 pfx.set_certificate(cert)
 pfxData = pfx.export(b'passphrase')
-print(pfxData)
-
+#print(pfxData)
+pfxcert = pfx.get_certificate()
+print(pfxcert.get_extension(2))
 
 with open('test.p12', 'wb') as p12File:
     p12File.write(pfxData)
