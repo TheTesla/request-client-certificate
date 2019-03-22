@@ -2,6 +2,7 @@
 
 from OpenSSL import crypto
 import requests
+import requests_pkcs12
 
 pKey = crypto.PKey()
 pKey.generate_key(crypto.TYPE_RSA, 4096)
@@ -30,9 +31,9 @@ setattr(subj, "C", "DE")
 
 
 extensions = [crypto.X509Extension(b"subjectAltName", False, "DNS:test.tld, DNS:tester.tld, DNS:test.srns.net".encode('ascii'))]
-extensions.append(crypto.X509Extension(b"keyUsage", False, "Digital Signature, Non Repudiation, Key Encipherment".encode('ascii')))
-extensions.append(crypto.X509Extension(b"extendedKeyUsage", False, "serverAuth, clientAuth".encode('ascii')))
-extensions.append(crypto.X509Extension(b"basicConstraints", False, "CA:FALSE".encode('ascii')))
+#extensions.append(crypto.X509Extension(b"keyUsage", False, "Digital Signature, Non Repudiation, Key Encipherment".encode('ascii')))
+#extensions.append(crypto.X509Extension(b"extendedKeyUsage", False, "serverAuth, clientAuth".encode('ascii')))
+#extensions.append(crypto.X509Extension(b"basicConstraints", False, "CA:FALSE".encode('ascii')))
 
 
 req.add_extensions(extensions)
@@ -50,9 +51,11 @@ csrFile = open("test.csr", "w")
 csrFile.write(str(csr.decode('utf8')))
 csrFile.close()
 
-response = requests.post(url="https://srns.smartrns.net/genclientcert_keygen.php", data={"csr": csr, "days": 1})
+#response = requests.post(url="https://srns.smartrns.net/genclientcert_keygen.php", data={"csr": csr, "days": 1})
+#response = requests.post(url="https://gotest.smartrns.net:8443/", data={"csr": csr, "days": 360}, cert='test.p12')
+response = requests_pkcs12.post(url="https://gotest.smartrns.net:8443/", data={"csr": csr, "days": 360}, pkcs12_filename='test.p12', pkcs12_password='passphrase')
 print(response)
-#print(response.text)
+print(response.text)
 
 
 
