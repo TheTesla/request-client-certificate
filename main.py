@@ -30,7 +30,7 @@ setattr(subj, "C", "DE")
 
 
 
-extensions = [crypto.X509Extension(b"subjectAltName", False, "DNS:test.tld, DNS:tester.tld, DNS:test.srns.net".encode('ascii'))]
+extensions = [crypto.X509Extension(b"subjectAltName", False, "DNS:new2.tld, DNS:test.tld., DNS:tester.tld, DNS:test.srns.net".encode('ascii'))]
 #extensions.append(crypto.X509Extension(b"keyUsage", False, "Digital Signature, Non Repudiation, Key Encipherment".encode('ascii')))
 #extensions.append(crypto.X509Extension(b"extendedKeyUsage", False, "serverAuth, clientAuth".encode('ascii')))
 #extensions.append(crypto.X509Extension(b"basicConstraints", False, "CA:FALSE".encode('ascii')))
@@ -51,13 +51,14 @@ csrFile = open("test.csr", "w")
 csrFile.write(str(csr.decode('utf8')))
 csrFile.close()
 
-#response = requests.post(url="https://srns.smartrns.net/genclientcert_keygen.php", data={"csr": csr, "days": 1})
-#response = requests.post(url="https://gotest.smartrns.net:8443/", data={"csr": csr, "days": 360}, cert='test.p12')
-response = requests_pkcs12.post(url="https://gotest.smartrns.net:8443/", data={"csr": csr, "days": 360}, pkcs12_filename='test.p12', pkcs12_password='passphrase')
+try:
+    response = requests_pkcs12.post(url="https://gotest.smartrns.net:8443/", data={"csr": csr, "days": 360}, pkcs12_filename='test.p12', pkcs12_password='passphrase')
+except:
+    response = requests.post(url="https://gotest.smartrns.net:8443/", data={"csr": csr, "days": 360})
 print(response)
 print(response.text)
 
-
+x509pem = response.text
 
 cert = crypto.load_certificate(crypto.FILETYPE_PEM, response.text)
 priv = crypto.load_privatekey(crypto.FILETYPE_PEM, privKeyPEM)
@@ -73,6 +74,9 @@ pfxData = pfx.export(b'passphrase')
 #print(pfxData)
 pfxcert = pfx.get_certificate()
 print(pfxcert.get_extension(2))
+
+with open('test.pem', 'wb') as x509File:
+    x509File.write(x509pem.encode('utf-8'))
 
 with open('test.p12', 'wb') as p12File:
     p12File.write(pfxData)
